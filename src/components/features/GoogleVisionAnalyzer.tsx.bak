@@ -1,0 +1,344 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { analyzeImage, VisionAPIResponse } from '@/lib/google-vision';
+
+interface GoogleVisionAnalyzerProps {
+  imageFile: File | null;
+  imageUrl: string | null;
+  gpsData?: {
+    latitude: number;
+    longitude: number;
+  } | null;
+}
+
+export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: GoogleVisionAnalyzerProps) {
+  const [isAnalyzing, setIsAnalyzing] = useState(true); // 初始状态设为分析中
+  const [results, setResults] = useState<VisionAPIResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'description' | 'data'>('description');
+
+  // 当imageFile变化时自动调用分析
+  useEffect(() => {
+    if (imageFile) {
+      handleAnalyze();
+    }
+  }, [imageFile]);
+
+  const handleAnalyze = async () => {
+    if (!imageFile) {
+      setError('请先上传图片');
+      return;
+    }
+
+    try {
+      setIsAnalyzing(true);
+      setError(null);
+      
+      // 立即调用Google Vision API分析图片
+      const analysisResults = await analyzeImage(imageFile);
+      console.log('Google Vision API分析结果:', analysisResults);
+      setResults(analysisResults);
+      
+    } catch (err) {
+      setError('分析图片时出错');
+      console.error('分析图片时出错:', err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // 基于分析结果生成描述
+  const generateDescription = () => {
+    if (!results) return '';
+    
+    let description = '';
+    let location = '';
+    
+    // 从分析结果中提取位置信息
+    if (results.landmarkAnnotations && results.landmarkAnnotations.length > 0) {
+      location = results.landmarkAnnotations[0].description;
+    }
+    
+    // 分析人物
+    const people = results.extendedAnalysis?.people;
+    if (people) {
+      const count = people.count || 1;
+      const gender = people.gender || [];
+      const race = people.race || [];
+      
+      // 第一段：描述场景、人物和位置
+      description += `In the vicinity of ${location ? `<span class="font-semibold">${location}</span>` : 'the location shown'}, `;
+      description += `${count === 1 ? 'an individual' : `${count} individuals`} `;
+      description += `share${count === 1 ? 's' : ''} a moment `;
+      
+      // 添加环境描述
+      if (results.labelAnnotations && results.labelAnnotations.length > 0) {
+        const environmentLabels = results.labelAnnotations
+          .filter(label => ['tree', 'plant', 'water', 'sky', 'mountain', 'grass', 'foliage', 'nature'].includes(label.description.toLowerCase()))
+          .map(label => label.description.toLowerCase());
+        
+        if (environmentLabels.length > 0) {
+          description += 'amidst the backdrop of ';
+          if (environmentLabels.includes('tree') || environmentLabels.includes('plant')) {
+            description += 'verdant foliage';
+          } else if (environmentLabels.includes('water')) {
+            description += 'tranquil waters';
+          } else if (environmentLabels.includes('mountain')) {
+            description += 'majestic mountains';
+          } else {
+            description += 'the natural setting';
+          }
+          description += '. ';
+        } else {
+          description += 'in the scene. ';
+        }
+      } else {
+        description += 'in the scene. ';
+      }
+      
+      // 第二段：描述人物特征、种族和年龄
+      description += `${count === 1 ? 'This person' : 'These people'} `;
+      
+      if (race.length > 0) {
+        description += `appear${count === 1 ? 's' : ''} to be of <span class="font-semibold">${race.join(' or ')}</span> descent. `;
+      }
+      
+      // 添加服装和物品描述
+      if (people.clothing && people.clothing.length > 0) {
+        description += `Attired in ${people.clothing.join(', ')}, `;
+      }
+      
+      // 添加表情或情绪
+      if (people.emotions && Object.values(people.emotions).length > 0) {
+        const emotions = Object.values(people.emotions)[0].split('、')[0];
+        description += `${count === 1 ? 'the person displays' : 'they display'} ${emotions} expressions. `;
+      }
+
+      // 第三段：描述社会经济属性（收入、政治倾向等）
+      if (results.extendedAnalysis?.possibleIncomeRange) {
+        description += `Their financial profile suggests an income in the range of <span class="font-semibold">${results.extendedAnalysis.possibleIncomeRange}</span>. `;
+      }
+      
+      // 添加政治倾向（如果有）
+      if (results.extendedAnalysis?.possiblePoliticalAffiliation) {
+        description += `In terms of political alignment, they may identify with the <span class="font-semibold">${results.extendedAnalysis.possiblePoliticalAffiliation}</span>. `;
+      }
+
+      // 第四段：兴趣爱好和可能的广告目标
+      if (results.extendedAnalysis?.possibleInterests && results.extendedAnalysis.possibleInterests.length > 0) {
+        description += `Their interests likely include <span class="font-semibold">${results.extendedAnalysis.possibleInterests.join(', ')}</span>. `;
+      }
+      
+      if (results.extendedAnalysis?.possibleTargetedAds && results.extendedAnalysis.possibleTargetedAds.length > 0) {
+        description += `Based on the visual cues, they might be receptive to advertisements relating to ${results.extendedAnalysis.possibleTargetedAds.join(', ')}.`;
+      }
+    } else {
+      // 如果没有检测到人，则描述环境
+      description = 'The image captures a scene ';
+      if (location) {
+        description += `near <span class="font-semibold">${location}</span>. `;
+      } else {
+        description += '. ';
+      }
+      
+      // 添加物体描述
+      if (results.labelAnnotations && results.labelAnnotations.length > 0) {
+        const topLabels = results.labelAnnotations.slice(0, 5).map(label => label.description);
+        description += `Notable elements include ${topLabels.join(', ')}.`;
+      }
+    }
+    
+    return description;
+  };
+
+  if (!imageFile || !imageUrl) {
+    return null;
+  }
+
+  return (
+    <div className="w-full overflow-hidden bg-black text-white">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+        {/* 左侧：图片和地图 */}
+        <div className="flex flex-col">
+          {/* 上部分：图片 */}
+          <div className="flex items-center justify-center bg-black" style={{height: '50vh'}}>
+            <img 
+              src={imageUrl} 
+              alt="Analyzed" 
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+          
+          {/* 下部分：地图 */}
+          <div className="relative" style={{height: '30vh'}}>
+            {/* 备用地图显示 - 如果没有真实地图数据 */}
+            <div className="absolute inset-0 w-full h-full bg-gray-900/70">
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                backgroundSize: '20px 20px, 100px 100px, 100px 100px'
+              }}></div>
+              
+              {/* 位置标记 */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-red-500"></div>
+              </div>
+              
+              <div className="absolute bottom-0 left-0 right-0 text-xs text-white/50 p-1">
+                Imagery ©2025 Airbus
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 右侧：分析结果 */}
+        <div className="flex flex-col h-full">
+          {/* 标签切换 */}
+          <div className="flex bg-gray-800">
+            <button
+              className={`py-3 px-6 text-lg w-1/2 text-center transition-colors ${
+                activeTab === 'description' 
+                  ? 'bg-gray-700 text-white font-medium' 
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('description')}
+            >
+              Description 描述
+            </button>
+            <button
+              className={`py-3 px-6 text-lg w-1/2 text-center transition-colors ${
+                activeTab === 'data' 
+                  ? 'bg-gray-700 text-white font-medium' 
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('data')}
+            >
+              Data 数据
+            </button>
+          </div>
+          
+          {/* 分析加载状态 */}
+          {isAnalyzing && (
+            <div className="flex justify-center items-center p-10 flex-grow">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-4"></div>
+                <p className="text-gray-300">正在分析您的照片...</p>
+              </div>
+            </div>
+          )}
+          
+          {/* 内容区域 */}
+          {!isAnalyzing && (
+            <div className="p-6 overflow-y-auto flex-grow">
+              {activeTab === 'description' && results && (
+                <div className="space-y-4">
+                  {/* 主要描述内容 - 使用API分析结果 */}
+                  <div className="text-xl leading-relaxed" 
+                    dangerouslySetInnerHTML={{ __html: generateDescription() }}></div>
+                </div>
+              )}
+              
+              {activeTab === 'data' && results && (
+                <div className="space-y-3">
+                  {/* 位置信息 */}
+                  {results.landmarkAnnotations && results.landmarkAnnotations.length > 0 && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Location 位置</h3>
+                      <p>{results.landmarkAnnotations[0].description} - 
+                        {results.landmarkAnnotations[0].locations && results.landmarkAnnotations[0].locations.length > 0 ? 
+                          `${results.landmarkAnnotations[0].locations[0].latLng.latitude.toFixed(4)}, ${results.landmarkAnnotations[0].locations[0].latLng.longitude.toFixed(4)}` : 
+                          '未知坐标'}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 人物信息 */}
+                  {results.extendedAnalysis?.people && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">People 人物</h3>
+                      <p>{results.extendedAnalysis.people.count || 1} {results.extendedAnalysis.people.count === 1 ? 'person' : 'people'}, 
+                        {results.extendedAnalysis.people.gender ? ` ${results.extendedAnalysis.people.gender.join(', ')}` : ''} 
+                        {results.extendedAnalysis.people.age ? ` ${results.extendedAnalysis.people.age.join(', ')}` : ''}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 种族信息 */}
+                  {results.extendedAnalysis?.people?.race && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Ethnicity 种族</h3>
+                      <p>{results.extendedAnalysis.people.race.join(', ')}</p>
+                    </div>
+                  )}
+                  
+                  {/* 收入范围 */}
+                  {results.extendedAnalysis?.possibleIncomeRange && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Income Range 收入范围</h3>
+                      <p>{results.extendedAnalysis.possibleIncomeRange}</p>
+                    </div>
+                  )}
+
+                  {/* 情绪 */}
+                  {results.extendedAnalysis?.people?.emotions && Object.keys(results.extendedAnalysis.people.emotions).length > 0 && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Emotions 情绪</h3>
+                      <p>{Object.entries(results.extendedAnalysis.people.emotions).map(([person, emotion]) => 
+                        `${person}: ${emotion}`).join(', ')}</p>
+                    </div>
+                  )}
+
+                  {/* 服装 */}
+                  {results.extendedAnalysis?.people?.clothing && results.extendedAnalysis.people.clothing.length > 0 && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Clothing 服装</h3>
+                      <p>{results.extendedAnalysis.people.clothing.join(', ')}</p>
+                    </div>
+                  )}
+                  
+                  {/* 兴趣爱好 */}
+                  {results.extendedAnalysis?.possibleInterests && results.extendedAnalysis.possibleInterests.length > 0 && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Interests 兴趣爱好</h3>
+                      <p>{results.extendedAnalysis.possibleInterests.join(', ')}</p>
+                    </div>
+                  )}
+                  
+                  {/* 政治倾向 */}
+                  {results.extendedAnalysis?.possiblePoliticalAffiliation && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Political Affiliation 政治倾向</h3>
+                      <p>{results.extendedAnalysis.possiblePoliticalAffiliation}</p>
+                    </div>
+                  )}
+
+                  {/* 可能的广告目标 */}
+                  {results.extendedAnalysis?.possibleTargetedAds && results.extendedAnalysis.possibleTargetedAds.length > 0 && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Targeted Ads 潜在广告目标</h3>
+                      <p>{results.extendedAnalysis.possibleTargetedAds.join(', ')}</p>
+                    </div>
+                  )}
+                  
+                  {/* 物体识别 */}
+                  {results.labelAnnotations && results.labelAnnotations.length > 0 && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-1">Objects 物体</h3>
+                      <p>{results.labelAnnotations.slice(0, 6).map(obj => obj.description).join(', ')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {error && (
+                <div className="p-4 bg-red-900/20 text-red-400 rounded">
+                  {error}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+} 
