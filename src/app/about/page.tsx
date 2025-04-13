@@ -1,8 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function About() {
+  const { t } = useLanguage();
+
   return (
     <main className="min-h-screen flex flex-col">
       <Header />
@@ -10,14 +15,40 @@ export default function About() {
       <div className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-            About Photo Privacy Analyzer
+            {t('about')}
           </h1>
           
           <div className="prose prose-lg dark:prose-invert mx-auto">
             <p>
-              Photo Privacy Analyzer is a free, open-source tool designed to help users understand what private information might be leaked through their photos.
-              In this digital age, photos contain more than just images — they also include various metadata (EXIF, IPTC, XMP, etc.),
-              which may reveal your location, device information, and other sensitive details.
+              Photo Analyzer is an application designed to help you understand the potential privacy implications of your photos.
+            </p>
+            
+            <p>
+              In the digital age, photos we share online can contain a surprising amount of personal information. 
+              From GPS coordinates showing where the photo was taken, to metadata revealing what device was used, 
+              and even AI analysis that can detect personal attributes - each photo tells a story beyond the image itself.
+            </p>
+            
+            <h2>Privacy-First Approach</h2>
+            <p>
+              All analysis happens directly in your browser. Your photos are never uploaded to any server, 
+              ensuring your privacy is maintained throughout the analysis process.
+            </p>
+            
+            <h2>How It Works</h2>
+            <p>
+              This tool uses several technologies to analyze your photos:
+            </p>
+            <ul>
+              <li>EXIF data extraction - reveals technical details and potentially GPS coordinates</li>
+              <li>Google Vision API simulation - demonstrates what AI can detect in your photos</li>
+              <li>Browser-based processing - ensures your photos never leave your device</li>
+            </ul>
+            
+            <h2>Educational Purpose</h2>
+            <p>
+              This tool is created for educational purposes to raise awareness about digital privacy. 
+              By understanding what information your photos might reveal, you can make more informed decisions about what you share online.
             </p>
             
             <h2>Project Goals</h2>
