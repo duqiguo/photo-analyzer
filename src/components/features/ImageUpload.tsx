@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void;
@@ -12,6 +13,7 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setError(null);
@@ -97,15 +99,15 @@ export default function ImageUpload({
           </div>
           
           <h3 className="mt-6 text-xl font-semibold text-gray-800 dark:text-gray-200">
-            {isAnalyzing ? 'Analyzing...' : 'Select a photo'}
+            {isAnalyzing ? t('analyzing') : t('selectPhoto')}
           </h3>
           
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            Supports JPG, PNG or WebP format, max 10MB
+            {t('supportedFormats')}
           </p>
           
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
-            All photo analysis is done in your browser, nothing is uploaded to servers
+            {t('analysisSecurity')}
           </p>
         </div>
       </div>

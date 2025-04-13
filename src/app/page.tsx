@@ -8,12 +8,14 @@ import Footer from '@/components/layout/Footer';
 import { useState } from 'react';
 import { parseExifData } from '@/lib/exif-parser';
 import { ExifData } from '@/components/features/AnalysisResult';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Home() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [showAnalysisResult, setShowAnalysisResult] = useState(false);
   const [exifData, setExifData] = useState<ExifData>({});
+  const { t } = useLanguage();
 
   // Handle image selection
   const handleImageSelect = async (file: File) => {
@@ -55,10 +57,10 @@ export default function Home() {
         <div className="max-w-6xl w-full">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Photo Analyzer
+              {t('photoAnalyzer')}
             </h1>
             <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-              Upload a photo to understand what privacy information it might contain and what data AI can extract from it.
+              {t('uploadDescription')}
             </p>
           </div>
           

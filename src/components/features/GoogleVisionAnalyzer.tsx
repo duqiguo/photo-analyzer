@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { analyzeImage, VisionAPIResponse } from '@/lib/google-vision';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface GoogleVisionAnalyzerProps {
   imageFile: File | null;
@@ -18,6 +19,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'description' | 'data'>('description');
   const [mapLocation, setMapLocation] = useState<{lat: number, lng: number} | null>(null);
+  const { language, t } = useLanguage();
 
   // Automatically analyze when imageFile changes
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
 
   const handleAnalyze = async () => {
     if (!imageFile) {
-      setError('Please upload an image first');
+      setError(t('uploadFirst'));
       return;
     }
 
@@ -75,7 +77,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
       setResults(analysisResults);
       
     } catch (err) {
-      setError('Error analyzing image');
+      setError(t('errorAnalyzing'));
       console.error('Error analyzing image:', err);
     } finally {
       setIsAnalyzing(false);
@@ -102,8 +104,12 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
       const race = people.race || [];
       
       // Section 1: Describe scene, people and location
-      description += `In the scene of the photo, there is ${count === 1 ? 'one person' : `${count} individuals`}`;
-      description += `${count === 1 ? 's' : ''} `;
+      if (language === 'en') {
+        description += `In the scene of the photo, there is ${count === 1 ? 'one person' : `${count} individuals`}`;
+        description += `${count === 1 ? 's' : ''} `;
+      } else {
+        description += `在照片的场景中，有${count}${count === 1 ? '个人' : '个人'}`;
+      }
       
       // Add environment description
       if (results.labelAnnotations && results.labelAnnotations.length > 0) {
@@ -113,16 +119,30 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
           .map(label => label.description.toLowerCase());
         
         if (environmentLabels.length > 0) {
-          description += ' The background is';
-          if (environmentLabels.includes('tree') || environmentLabels.includes('plant') || 
-              environmentLabels.includes('树') || environmentLabels.includes('植物')) {
-            description += ' lush vegetation';
-          } else if (environmentLabels.includes('water') || environmentLabels.includes('水')) {
-            description += ' calm water';
-          } else if (environmentLabels.includes('mountain') || environmentLabels.includes('山')) {
-            description += ' majestic mountains';
+          if (language === 'en') {
+            description += ' The background is';
+            if (environmentLabels.includes('tree') || environmentLabels.includes('plant') || 
+                environmentLabels.includes('树') || environmentLabels.includes('植物')) {
+              description += ' lush vegetation';
+            } else if (environmentLabels.includes('water') || environmentLabels.includes('水')) {
+              description += ' calm water';
+            } else if (environmentLabels.includes('mountain') || environmentLabels.includes('山')) {
+              description += ' majestic mountains';
+            } else {
+              description += ' natural landscape';
+            }
           } else {
-            description += ' natural landscape';
+            description += '，背景是';
+            if (environmentLabels.includes('tree') || environmentLabels.includes('plant') || 
+                environmentLabels.includes('树') || environmentLabels.includes('植物')) {
+              description += '茂密的植被';
+            } else if (environmentLabels.includes('water') || environmentLabels.includes('水')) {
+              description += '平静的水面';
+            } else if (environmentLabels.includes('mountain') || environmentLabels.includes('山')) {
+              description += '雄伟的山脉';
+            } else {
+              description += '自然景观';
+            }
           }
           description += '.';
         } else {
@@ -134,82 +154,135 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
       
       // Section 2: Describe race and clothing
       if (race.length > 0) {
-        description += ` They are likely from the ${race.join(' or ')} race.`;
+        if (language === 'en') {
+          description += ` They are likely from the ${race.join(' or ')} race.`;
+        } else {
+          description += ` 他们可能是${race.join('或')}种族。`;
+        }
       }
       
       // Add clothing description
       if (people.clothing && people.clothing.length > 0) {
-        description += ` They are wearing ${people.clothing.join(', ')}.`;
+        if (language === 'en') {
+          description += ` They are wearing ${people.clothing.join(', ')}.`;
+        } else {
+          description += ` 他们穿着${people.clothing.join('、')}.`;
+        }
       }
       
       // Add expression or emotion
       if (people.emotions && Object.values(people.emotions).length > 0) {
         const emotions = Object.values(people.emotions)[0].split('、')[0];
-        description += ` Their expression shows ${emotions === 'Joy' ? 'joy' : 
+        if (language === 'en') {
+          description += ` Their expression shows ${emotions === 'Joy' ? 'joy' : 
                             emotions === 'Sorrow' ? 'sadness' : 
                             emotions === 'Anger' ? 'anger' : 
                             emotions === 'Surprise' ? 'surprise' : 
                             emotions === 'Neutral' ? 'neutral' : emotions}.`;
+        } else {
+          description += ` 他们的表情显示${emotions === 'Joy' ? '喜悦' : 
+                            emotions === 'Sorrow' ? '悲伤' : 
+                            emotions === 'Anger' ? '愤怒' : 
+                            emotions === 'Surprise' ? '惊讶' : 
+                            emotions === 'Neutral' ? '平静' : emotions}.`;
+        }
       }
 
       // Section 3: Income range and political leaning
       if (results.extendedAnalysis?.possibleIncomeRange) {
         const incomeRange = results.extendedAnalysis.possibleIncomeRange;
-        description += ` According to visual indicators, they belong to the <span class="font-semibold">${
-          incomeRange === 'High Income' ? 'high income' : 
-          incomeRange === 'Middle Income' ? 'middle income' : 
-          incomeRange === 'Low Income' ? 'low income' : incomeRange
-        }</span> group.`;
+        if (language === 'en') {
+          description += ` According to visual indicators, they belong to the <span class="font-semibold">${
+            incomeRange === 'High Income' ? 'high income' : 
+            incomeRange === 'Middle Income' ? 'middle income' : 
+            incomeRange === 'Low Income' ? 'low income' : incomeRange
+          }</span> group.`;
+        } else {
+          description += ` 根据视觉指标，他们属于<span class="font-semibold">${
+            incomeRange === 'High Income' ? '高收入' : 
+            incomeRange === 'Middle Income' ? '中等收入' : 
+            incomeRange === 'Low Income' ? '低收入' : incomeRange
+          }</span>群体。`;
+        }
       }
       
       // Add political leaning
       if (results.extendedAnalysis?.possiblePoliticalAffiliation) {
         const political = results.extendedAnalysis.possiblePoliticalAffiliation;
-        description += ` They are likely to lean towards <span class="font-semibold">${
-          political === 'Conservative Leaning' ? 'conservative' : 
-          political === 'Liberal Leaning' ? 'liberal' : 
-          political === 'Neutral/Unknown' ? 'neutral/unknown' : political
-        }</span>.`;
+        if (language === 'en') {
+          description += ` They are likely to lean towards <span class="font-semibold">${
+            political === 'Conservative Leaning' ? 'conservative' : 
+            political === 'Liberal Leaning' ? 'liberal' : 
+            political === 'Neutral/Unknown' ? 'neutral/unknown' : political
+          }</span>.`;
+        } else {
+          description += ` 他们可能倾向于<span class="font-semibold">${
+            political === 'Conservative Leaning' ? '保守派' : 
+            political === 'Liberal Leaning' ? '自由派' : 
+            political === 'Neutral/Unknown' ? '中立/未知' : political
+          }</span>。`;
+        }
       }
 
       // Section 4: Interests and advertising targets
       if (results.extendedAnalysis?.possibleInterests && results.extendedAnalysis.possibleInterests.length > 0) {
         const interestsMap: Record<string, string> = {
-          'Sports': 'sports', 
-          'Fashion': 'fashion', 
-          'Technology': 'technology',
-          'Art': 'art', 
-          'Travel': 'travel', 
-          'Food': 'food',
-          'Nature': 'nature', 
-          'Music': 'music', 
-          'Reading': 'reading',
-          'Fitness': 'fitness'
+          'Sports': language === 'en' ? 'sports' : '体育', 
+          'Fashion': language === 'en' ? 'fashion' : '时尚', 
+          'Technology': language === 'en' ? 'technology' : '科技',
+          'Art': language === 'en' ? 'art' : '艺术', 
+          'Travel': language === 'en' ? 'travel' : '旅游', 
+          'Food': language === 'en' ? 'food' : '美食',
+          'Nature': language === 'en' ? 'nature' : '自然', 
+          'Music': language === 'en' ? 'music' : '音乐', 
+          'Reading': language === 'en' ? 'reading' : '阅读',
+          'Fitness': language === 'en' ? 'fitness' : '健身'
         };
         
         const translatedInterests = results.extendedAnalysis.possibleInterests.map(
           interest => interestsMap[interest] || interest
         );
         
-        description += ` Their possible interests include <span class="font-semibold">${translatedInterests.join(', ')}</span>.`;
+        if (language === 'en') {
+          description += ` Their possible interests include <span class="font-semibold">${translatedInterests.join(', ')}</span>.`;
+        } else {
+          description += ` 他们可能的兴趣包括<span class="font-semibold">${translatedInterests.join('、')}</span>。`;
+        }
       }
       
       if (results.extendedAnalysis?.possibleTargetedAds && results.extendedAnalysis.possibleTargetedAds.length > 0) {
-        description += ` Based on visual clues, they may react to ads related to ${results.extendedAnalysis.possibleTargetedAds.slice(0, 3).join(', ')}.`;
+        if (language === 'en') {
+          description += ` Based on visual clues, they may react to ads related to ${results.extendedAnalysis.possibleTargetedAds.slice(0, 3).join(', ')}.`;
+        } else {
+          description += ` 根据视觉线索，他们可能会对与${results.extendedAnalysis.possibleTargetedAds.slice(0, 3).join('、')}相关的广告有反应。`;
+        }
       }
     } else {
       // If no people detected, describe the environment
-      description = 'This photo shows a scene';
-      if (location) {
-        description += `, located near <span class="font-semibold">${location}</span>.`;
+      if (language === 'en') {
+        description = 'This photo shows a scene';
+        if (location) {
+          description += `, located near <span class="font-semibold">${location}</span>.`;
+        } else {
+          description += '.';
+        }
       } else {
-        description += '.';
+        description = '这张照片展示了一个场景';
+        if (location) {
+          description += `，位于<span class="font-semibold">${location}</span>附近。`;
+        } else {
+          description += '。';
+        }
       }
       
       // Add object description
       if (results.labelAnnotations && results.labelAnnotations.length > 0) {
         const topLabels = results.labelAnnotations.slice(0, 5).map(label => label.description);
-        description += ` The main content includes ${topLabels.join(', ')}.`;
+        if (language === 'en') {
+          description += ` The main content includes ${topLabels.join(', ')}.`;
+        } else {
+          description += ` 主要内容包括${topLabels.join('、')}。`;
+        }
       }
       
       // Add color information
@@ -222,24 +295,33 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
           const b = mainColor.blue || 0;
           
           let colorName = '';
-          if (r > 200 && g < 100 && b < 100) colorName = 'red';
-          else if (r < 100 && g > 200 && b < 100) colorName = 'green';
-          else if (r < 100 && g < 100 && b > 200) colorName = 'blue';
-          else if (r > 200 && g > 200 && b < 100) colorName = 'yellow';
-          else if (r > 200 && g < 100 && b > 200) colorName = 'purple';
-          else if (r < 100 && g > 200 && b > 200) colorName = 'cyan';
-          else if (r > 200 && g > 100 && b < 100) colorName = 'orange';
-          else if (r > 200 && g > 200 && b > 200) colorName = 'white';
-          else if (r < 100 && g < 100 && b < 100) colorName = 'black';
-          else colorName = 'mixed';
+          let colorNameCn = '';
+          if (r > 200 && g < 100 && b < 100) { colorName = 'red'; colorNameCn = '红色'; }
+          else if (r < 100 && g > 200 && b < 100) { colorName = 'green'; colorNameCn = '绿色'; }
+          else if (r < 100 && g < 100 && b > 200) { colorName = 'blue'; colorNameCn = '蓝色'; }
+          else if (r > 200 && g > 200 && b < 100) { colorName = 'yellow'; colorNameCn = '黄色'; }
+          else if (r > 200 && g < 100 && b > 200) { colorName = 'purple'; colorNameCn = '紫色'; }
+          else if (r < 100 && g > 200 && b > 200) { colorName = 'cyan'; colorNameCn = '青色'; }
+          else if (r > 200 && g > 100 && b < 100) { colorName = 'orange'; colorNameCn = '橙色'; }
+          else if (r > 200 && g > 200 && b > 200) { colorName = 'white'; colorNameCn = '白色'; }
+          else if (r < 100 && g < 100 && b < 100) { colorName = 'black'; colorNameCn = '黑色'; }
+          else { colorName = 'mixed'; colorNameCn = '混合色'; }
           
-          description += ` The main color of the image is ${colorName}, accounting for about ${Math.round(colors[0].pixelFraction * 100)}% of the image.`;
+          if (language === 'en') {
+            description += ` The main color of the image is ${colorName}, accounting for about ${Math.round(colors[0].pixelFraction * 100)}% of the image.`;
+          } else {
+            description += ` 图像的主要颜色是${colorNameCn}，约占图像的${Math.round(colors[0].pixelFraction * 100)}%。`;
+          }
         }
       }
       
       // If web detection results exist, add most relevant web content
       if (results.webDetection?.bestGuessLabels && results.webDetection.bestGuessLabels.length > 0) {
-        description += ` The most similar network search result for the image content is "${results.webDetection.bestGuessLabels[0].label}".`;
+        if (language === 'en') {
+          description += ` The most similar network search result for the image content is "${results.webDetection.bestGuessLabels[0].label}".`;
+        } else {
+          description += ` 图像内容的最相似网络搜索结果是"${results.webDetection.bestGuessLabels[0].label}"。`;
+        }
       }
     }
     
@@ -254,7 +336,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
   const getGoogleMapUrl = () => {
     if (!mapLocation) return '';
     // Use Google Maps URL format with language parameter set to English
-    return `https://maps.google.com/maps?q=${mapLocation.lat},${mapLocation.lng}&z=15&output=embed&hl=en&gl=us`;
+    return `https://maps.google.com/maps?q=${mapLocation.lat},${mapLocation.lng}&z=15&output=embed&hl=${language}`;
   };
 
   return (
@@ -283,7 +365,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
               ></iframe>
             ) : (
               <div className="absolute inset-0 w-full h-full bg-gray-900/70 flex items-center justify-center">
-                <p className="text-white text-sm">Loading map...</p>
+                <p className="text-white text-sm">{t('loading')}</p>
               </div>
             )}
           </div>
@@ -301,7 +383,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
               }`}
               onClick={() => setActiveTab('description')}
             >
-              Description
+              {t('description')}
             </button>
             <button
               className={`py-3 px-6 text-lg w-1/2 text-center transition-colors ${
@@ -311,7 +393,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
               }`}
               onClick={() => setActiveTab('data')}
             >
-              Data
+              {t('data')}
             </button>
           </div>
           
@@ -320,7 +402,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
             <div className="flex justify-center items-center p-10 flex-grow">
               <div className="flex flex-col items-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-4"></div>
-                <p className="text-gray-300">Analyzing your photo...</p>
+                <p className="text-gray-300">{t('analyzingPhoto')}</p>
               </div>
             </div>
           )}
@@ -340,86 +422,123 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
                 <div className="space-y-3">
                   {/* 1. People information */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">People</h3>
+                    <h3 className="font-semibold mb-1">{t('people')}</h3>
                     <p>{(results.extendedAnalysis?.people?.count || 1)} {(results.extendedAnalysis?.people?.count || 1) === 1 ? 'person' : 'people'}, 
-                      {results.extendedAnalysis?.people?.gender ? ` ${results.extendedAnalysis.people.gender.join(', ')}` : ' Unknown'} 
+                      {results.extendedAnalysis?.people?.gender ? ` ${results.extendedAnalysis.people.gender.join(', ')}` : ` ${t('unknown')}`} 
                       {results.extendedAnalysis?.people?.age ? ` ${results.extendedAnalysis.people.age.join(', ')}` : ' Adult'}
                     </p>
                   </div>
                   
                   {/* 2. Race information */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">Race</h3>
-                    <p>{results.extendedAnalysis?.people?.race?.length ? results.extendedAnalysis.people.race.join(', ') : 'Unknown'}</p>
+                    <h3 className="font-semibold mb-1">{t('race')}</h3>
+                    <p>{results.extendedAnalysis?.people?.race?.length ? results.extendedAnalysis.people.race.join(', ') : t('unknown')}</p>
                   </div>
                   
                   {/* 4. Emotion */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">Emotion</h3>
+                    <h3 className="font-semibold mb-1">{t('emotion')}</h3>
                     <p>{results.extendedAnalysis?.people?.emotions && Object.keys(results.extendedAnalysis.people.emotions).length > 0 ? 
                       Object.entries(results.extendedAnalysis.people.emotions).map(([person, emotion]) => {
-                        const personEN = person.replace('Person', 'Person ');
-                        const emotionEN = emotion
-                          .replace('Joy', 'Joy')
-                          .replace('Sorrow', 'Sorrow')
-                          .replace('Anger', 'Anger')
-                          .replace('Surprise', 'Surprise')
-                          .replace('Neutral', 'Neutral')
-                          .replace(', ', ', ');
-                        return `${personEN}: ${emotionEN}`;
-                      }).join(', ') : 'Person 1: Neutral'}</p>
+                        const personText = language === 'en' ? person.replace('Person', 'Person ') : person.replace('Person', '人物 ');
+                        const emotionText = language === 'en' 
+                          ? emotion
+                              .replace('Joy', 'Joy')
+                              .replace('Sorrow', 'Sorrow')
+                              .replace('Anger', 'Anger')
+                              .replace('Surprise', 'Surprise')
+                              .replace('Neutral', 'Neutral')
+                              .replace(', ', ', ')
+                          : emotion
+                              .replace('Joy', '喜悦')
+                              .replace('Sorrow', '悲伤')
+                              .replace('Anger', '愤怒')
+                              .replace('Surprise', '惊讶')
+                              .replace('Neutral', '平静')
+                              .replace(', ', '、');
+                        return `${personText}: ${emotionText}`;
+                      }).join(language === 'en' ? ', ' : '、') : language === 'en' ? 'Person 1: Neutral' : '人物1: 平静'}</p>
                   </div>
                   
                   {/* 5. Clothing */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">Clothing</h3>
+                    <h3 className="font-semibold mb-1">{t('clothing')}</h3>
                     <p>{results.extendedAnalysis?.people?.clothing && results.extendedAnalysis.people.clothing.length > 0 ? 
-                      results.extendedAnalysis.people.clothing.join(', ') : 'Casual clothing'}</p>
+                      results.extendedAnalysis.people.clothing.join(language === 'en' ? ', ' : '、') : language === 'en' ? 'Casual clothing' : '休闲服装'}</p>
                   </div>
                   
                   {/* 6. Interests */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">Interests</h3>
+                    <h3 className="font-semibold mb-1">{t('interests')}</h3>
                     <p>{results.extendedAnalysis?.possibleInterests && results.extendedAnalysis.possibleInterests.length > 0 ? 
                       results.extendedAnalysis.possibleInterests.map(interest => 
-                        interest === 'Sports' ? 'sports' : 
-                        interest === 'Fashion' ? 'fashion' : 
-                        interest === 'Technology' ? 'technology' :
-                        interest === 'Art' ? 'art' : 
-                        interest === 'Travel' ? 'travel' : 
-                        interest === 'Food' ? 'food' :
-                        interest === 'Nature' ? 'nature' : 
-                        interest === 'Music' ? 'music' : 
-                        interest === 'Reading' ? 'reading' :
-                        interest === 'Fitness' ? 'fitness' :
-                        interest === 'General interests' ? 'general interests' : interest).join(', ') : 'general interests'}</p>
+                        language === 'en' ? (
+                          interest === 'Sports' ? 'sports' : 
+                          interest === 'Fashion' ? 'fashion' : 
+                          interest === 'Technology' ? 'technology' :
+                          interest === 'Art' ? 'art' : 
+                          interest === 'Travel' ? 'travel' : 
+                          interest === 'Food' ? 'food' :
+                          interest === 'Nature' ? 'nature' : 
+                          interest === 'Music' ? 'music' : 
+                          interest === 'Reading' ? 'reading' :
+                          interest === 'Fitness' ? 'fitness' :
+                          interest === 'General interests' ? 'general interests' : interest
+                        ) : (
+                          interest === 'Sports' ? '体育' : 
+                          interest === 'Fashion' ? '时尚' : 
+                          interest === 'Technology' ? '科技' :
+                          interest === 'Art' ? '艺术' : 
+                          interest === 'Travel' ? '旅游' : 
+                          interest === 'Food' ? '美食' :
+                          interest === 'Nature' ? '自然' : 
+                          interest === 'Music' ? '音乐' : 
+                          interest === 'Reading' ? '阅读' :
+                          interest === 'Fitness' ? '健身' :
+                          interest === 'General interests' ? '一般兴趣' : interest
+                        )
+                      ).join(language === 'en' ? ', ' : '、') : language === 'en' ? 'general interests' : '一般兴趣'}</p>
                   </div>
                   
                   {/* 7. Political Affiliation */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">Political Affiliation</h3>
+                    <h3 className="font-semibold mb-1">{t('politicalAffiliation')}</h3>
                     <p>{results.extendedAnalysis?.possiblePoliticalAffiliation ? 
-                      (results.extendedAnalysis.possiblePoliticalAffiliation === 'Conservative Leaning' ? 'conservative' : 
-                      results.extendedAnalysis.possiblePoliticalAffiliation === 'Liberal Leaning' ? 'liberal' : 
-                      results.extendedAnalysis.possiblePoliticalAffiliation === 'Neutral/Unknown' ? 'neutral/unknown' : 
-                      results.extendedAnalysis.possiblePoliticalAffiliation) : 'neutral/unknown'}</p>
+                      (language === 'en' ? (
+                        results.extendedAnalysis.possiblePoliticalAffiliation === 'Conservative Leaning' ? 'conservative' : 
+                        results.extendedAnalysis.possiblePoliticalAffiliation === 'Liberal Leaning' ? 'liberal' : 
+                        results.extendedAnalysis.possiblePoliticalAffiliation === 'Neutral/Unknown' ? 'neutral/unknown' : 
+                        results.extendedAnalysis.possiblePoliticalAffiliation
+                      ) : (
+                        results.extendedAnalysis.possiblePoliticalAffiliation === 'Conservative Leaning' ? '保守派' : 
+                        results.extendedAnalysis.possiblePoliticalAffiliation === 'Liberal Leaning' ? '自由派' : 
+                        results.extendedAnalysis.possiblePoliticalAffiliation === 'Neutral/Unknown' ? '中立/未知' : 
+                        results.extendedAnalysis.possiblePoliticalAffiliation
+                      )) : language === 'en' ? 'neutral/unknown' : '中立/未知'}</p>
                   </div>
                   
                   {/* 3. Income Range */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">Income Range</h3>
+                    <h3 className="font-semibold mb-1">{t('incomeRange')}</h3>
                     <p>{results.extendedAnalysis?.possibleIncomeRange ? 
-                      (results.extendedAnalysis.possibleIncomeRange === 'High Income' ? 'high income' : 
-                      results.extendedAnalysis.possibleIncomeRange === 'Middle Income' ? 'middle income' : 
-                      results.extendedAnalysis.possibleIncomeRange === 'Low Income' ? 'low income' : 
-                      results.extendedAnalysis.possibleIncomeRange) : 'middle income'}</p>
+                      (language === 'en' ? (
+                        results.extendedAnalysis.possibleIncomeRange === 'High Income' ? 'high income' : 
+                        results.extendedAnalysis.possibleIncomeRange === 'Middle Income' ? 'middle income' : 
+                        results.extendedAnalysis.possibleIncomeRange === 'Low Income' ? 'low income' : 
+                        results.extendedAnalysis.possibleIncomeRange
+                      ) : (
+                        results.extendedAnalysis.possibleIncomeRange === 'High Income' ? '高收入' : 
+                        results.extendedAnalysis.possibleIncomeRange === 'Middle Income' ? '中等收入' : 
+                        results.extendedAnalysis.possibleIncomeRange === 'Low Income' ? '低收入' : 
+                        results.extendedAnalysis.possibleIncomeRange
+                      )) : language === 'en' ? 'middle income' : '中等收入'}</p>
                   </div>
                   
                   {/* 8. Possible Target Ads */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
-                    <h3 className="font-semibold mb-1">Target Ads</h3>
+                    <h3 className="font-semibold mb-1">{t('targetAds')}</h3>
                     <p>{results.extendedAnalysis?.possibleTargetedAds && results.extendedAnalysis.possibleTargetedAds.length > 0 ? 
-                      results.extendedAnalysis.possibleTargetedAds.join(', ') : 'General consumer products'}</p>
+                      results.extendedAnalysis.possibleTargetedAds.join(language === 'en' ? ', ' : '、') : language === 'en' ? 'General consumer products' : '一般消费品'}</p>
                   </div>
                 </div>
               )}

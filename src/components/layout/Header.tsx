@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <header className="w-full py-5 px-4 sm:px-6 lg:px-8 border-b border-gray-100 dark:border-gray-800/30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm sticky top-0 z-30">
@@ -16,7 +19,9 @@ export default function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent group-hover:from-primary-700 group-hover:to-secondary-600 transition-all">Photo Privacy Analyzer</span>
+          <span className="text-xl font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent group-hover:from-primary-700 group-hover:to-secondary-600 transition-all">
+            {language === 'en' ? 'Photo Privacy Analyzer' : '照片隐私分析器'}
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -25,26 +30,73 @@ export default function Header() {
             href="/" 
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
-            Home
+            {t('home')}
           </Link>
           <Link 
             href="/about" 
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
-            About
+            {t('about')}
           </Link>
           <Link 
             href="/privacy" 
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
-            Privacy
+            {t('privacy')}
           </Link>
           <Link 
             href="/index.html" 
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
-           Game
+            {t('game')}
           </Link>
+          
+          {/* Language Switcher (Desktop) */}
+          <div className="relative">
+            <button
+              onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 flex items-center"
+            >
+              {t('language')}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="ml-1 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+            
+            {isLangMenuOpen && (
+              <div className="absolute right-0 mt-2 py-2 w-32 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-100 dark:border-gray-800/30 z-20">
+                <button
+                  className={`w-full text-left px-4 py-2 text-sm ${language === 'en' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-gray-700 dark:text-gray-300'} hover:bg-gray-50 dark:hover:bg-gray-800/50`}
+                  onClick={() => {
+                    setLanguage('en');
+                    setIsLangMenuOpen(false);
+                  }}
+                >
+                  English
+                </button>
+                <button
+                  className={`w-full text-left px-4 py-2 text-sm ${language === 'zh' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-gray-700 dark:text-gray-300'} hover:bg-gray-50 dark:hover:bg-gray-800/50`}
+                  onClick={() => {
+                    setLanguage('zh');
+                    setIsLangMenuOpen(false);
+                  }}
+                >
+                  中文
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Mobile Navigation */}
@@ -97,29 +149,48 @@ export default function Header() {
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            Home
+            {t('home')}
           </Link>
           <Link
             href="/about"
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            About
+            {t('about')}
           </Link>
           <Link
             href="/privacy"
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            Privacy
+            {t('privacy')}
           </Link>
           <Link
             href="/index.html"
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            Docs
+            {t('game')}
           </Link>
+          
+          {/* Language Switcher (Mobile) */}
+          <div className="px-4 py-2">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('language')}</p>
+            <div className="flex space-x-2">
+              <button
+                className={`px-3 py-1 text-sm rounded ${language === 'en' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                onClick={() => setLanguage('en')}
+              >
+                English
+              </button>
+              <button
+                className={`px-3 py-1 text-sm rounded ${language === 'zh' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                onClick={() => setLanguage('zh')}
+              >
+                中文
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </header>

@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { t } = useLanguage();
 
   return (
     <footer className="w-full py-12 px-4 sm:px-6 lg:px-8 mt-auto bg-gray-50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800/30">
@@ -15,22 +17,24 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent">Photo Privacy Analyzer</span>
+              <span className="text-lg font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent">
+                {t('photoAnalyzer')}
+              </span>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
-              © {currentYear} Photo Privacy Analyzer - All analysis is performed in your browser, photos are never uploaded
+              © {currentYear} - {t('allRights')}
             </p>
           </div>
           <div className="flex flex-col space-y-4">
             <h4 className="font-medium text-gray-800 dark:text-white text-center md:text-right">
-              Links
+              {t('links')}
             </h4>
             <div className="flex space-x-6 justify-center md:justify-end">
               <Link href="/about" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
-                About
+                {t('about')}
               </Link>
               <Link href="/privacy" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
-                Privacy Policy
+                {t('privacyPolicy')}
               </Link>
               <Link 
                 href="https://github.com/yourusername/photo-analyzer" 
