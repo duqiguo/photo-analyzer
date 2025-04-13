@@ -16,31 +16,31 @@ export default function ImageUpload({
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setError(null);
     
-    // 验证文件
+    // Validate file
     if (acceptedFiles.length === 0) {
       return;
     }
     
-    // 检查所有文件的格式和大小
+    // Check file format and size
     let validFile: File | null = null;
     let invalidReason: string | null = null;
     
-    const file = acceptedFiles[0]; // 只处理第一个文件
+    const file = acceptedFiles[0]; // Only process the first file
     
-    // 检查文件类型
+    // Check file type
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      invalidReason = '不支持的文件格式';
+      invalidReason = 'Unsupported file format';
     }
-    // 检查文件大小 (最大 10MB)
+    // Check file size (max 10MB)
     else if (file.size > 10 * 1024 * 1024) {
-      invalidReason = '文件过大（超过10MB）';
+      invalidReason = 'File too large (exceeds 10MB)';
     }
     else {
       validFile = file;
     }
     
     if (invalidReason) {
-      setError(`无法处理文件：${file.name}（${invalidReason}）`);
+      setError(`Cannot process file: ${file.name} (${invalidReason})`);
       return;
     }
     
@@ -60,7 +60,7 @@ export default function ImageUpload({
     disabled: isAnalyzing
   });
   
-  // 更新拖放状态
+  // Update drag state
   useEffect(() => {
     setDragActive(isDragActive);
   }, [isDragActive]);
@@ -73,7 +73,7 @@ export default function ImageUpload({
       >
         <input {...getInputProps()} />
         
-        {/* 背景装饰 */}
+        {/* Background decoration */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-50/40 to-secondary-50/40 dark:from-primary-900/10 dark:to-secondary-900/10 rounded-xl"></div>
         <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary-400/10 dark:bg-primary-600/10 rounded-full blur-2xl"></div>
         <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-secondary-400/10 dark:bg-secondary-600/10 rounded-full blur-2xl"></div>
@@ -97,15 +97,15 @@ export default function ImageUpload({
           </div>
           
           <h3 className="mt-6 text-xl font-semibold text-gray-800 dark:text-gray-200">
-            {isAnalyzing ? '正在分析...' : '选择一张图片'}
+            {isAnalyzing ? 'Analyzing...' : 'Select a photo'}
           </h3>
           
           <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            支持 JPG、PNG 或 WebP 格式，最大 10MB
+            Supports JPG, PNG or WebP format, max 10MB
           </p>
           
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
-            所有照片分析将在您的浏览器中完成，不会上传到服务器
+            All photo analysis is done in your browser, nothing is uploaded to servers
           </p>
         </div>
       </div>

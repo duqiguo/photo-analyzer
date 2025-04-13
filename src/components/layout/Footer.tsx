@@ -15,22 +15,22 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent">照片隐私分析器</span>
+              <span className="text-lg font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent">Photo Privacy Analyzer</span>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
-              © {currentYear} 照片隐私分析器 - 所有分析都在您的浏览器中进行，不会上传照片
+              © {currentYear} Photo Privacy Analyzer - All analysis is performed in your browser, photos are never uploaded
             </p>
           </div>
           <div className="flex flex-col space-y-4">
             <h4 className="font-medium text-gray-800 dark:text-white text-center md:text-right">
-              链接
+              Links
             </h4>
             <div className="flex space-x-6 justify-center md:justify-end">
               <Link href="/about" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
-                关于
+                About
               </Link>
               <Link href="/privacy" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
-                隐私政策
+                Privacy Policy
               </Link>
               <Link 
                 href="https://github.com/yourusername/photo-analyzer" 

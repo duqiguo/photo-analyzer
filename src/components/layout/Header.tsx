@@ -16,7 +16,7 @@ export default function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent group-hover:from-primary-700 group-hover:to-secondary-600 transition-all">照片隐私分析器</span>
+          <span className="text-xl font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent group-hover:from-primary-700 group-hover:to-secondary-600 transition-all">Photo Privacy Analyzer</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -25,19 +25,19 @@ export default function Header() {
             href="/" 
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
-            首页
+            Home
           </Link>
           <Link 
             href="/about" 
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
-            关于
+            About
           </Link>
           <Link 
             href="/privacy" 
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
-            隐私
+            Privacy
           </Link>
           <Link 
             href="/index.html" 
@@ -97,28 +97,28 @@ export default function Header() {
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            首页
+            Home
           </Link>
           <Link
             href="/about"
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            关于
+            About
           </Link>
           <Link
             href="/privacy"
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            隐私
+            Privacy
           </Link>
           <Link
             href="/index.html"
             className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-all duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
-            文档
+            Docs
           </Link>
         </div>
       )}

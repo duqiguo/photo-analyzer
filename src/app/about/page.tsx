@@ -10,53 +10,53 @@ export default function About() {
       <div className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-            关于照片隐私分析器
+            About Photo Privacy Analyzer
           </h1>
           
           <div className="prose prose-lg dark:prose-invert mx-auto">
             <p>
-              照片隐私分析器是一个免费的、开源的工具，旨在帮助用户了解他们照片中可能泄露的私人信息。
-              在这个数字化时代，照片包含的不仅仅是图像，还有各种元数据（EXIF、IPTC、XMP等），
-              这些数据可能会泄露您的位置、设备信息和其他敏感细节。
+              Photo Privacy Analyzer is a free, open-source tool designed to help users understand what private information might be leaked through their photos.
+              In this digital age, photos contain more than just images — they also include various metadata (EXIF, IPTC, XMP, etc.),
+              which may reveal your location, device information, and other sensitive details.
             </p>
             
-            <h2>项目目标</h2>
+            <h2>Project Goals</h2>
             <p>
-              我们的主要目标是提高人们对数字隐私的意识，并提供一种简单的方法来检测和了解照片中的元数据。
-              所有的分析都在您的浏览器中本地进行，不会将您的照片上传到任何服务器，确保您的隐私安全。
+              Our main goal is to raise awareness about digital privacy and provide a simple way to detect and understand metadata in photos.
+              All analysis is performed locally in your browser, without uploading your photos to any server, ensuring your privacy is protected.
             </p>
             
-            <h2>技术实现</h2>
+            <h2>Technical Implementation</h2>
             <p>
-              照片隐私分析器使用现代Web技术构建：
-            </p>
-            <ul>
-              <li>Next.js - React框架</li>
-              <li>TailwindCSS - 样式和UI设计</li>
-              <li>Exifr - 客户端EXIF数据解析</li>
-              <li>React Dropzone - 文件上传功能</li>
-            </ul>
-            
-            <h2>隐私承诺</h2>
-            <p>
-              我们非常重视您的隐私。这就是为什么照片隐私分析器是一个完全在客户端运行的应用程序：
+              Photo Privacy Analyzer is built with modern web technologies:
             </p>
             <ul>
-              <li>您的照片永远不会离开您的设备</li>
-              <li>所有分析都在您的浏览器中进行</li>
-              <li>不使用追踪器或分析工具</li>
-              <li>不存储任何用户数据</li>
+              <li>Next.js - React framework</li>
+              <li>TailwindCSS - Styling and UI design</li>
+              <li>Exifr - Client-side EXIF data parsing</li>
+              <li>React Dropzone - File upload functionality</li>
             </ul>
             
-            <h2>开源项目</h2>
+            <h2>Privacy Commitment</h2>
             <p>
-              照片隐私分析器是一个开源项目，您可以在GitHub上查看源代码、报告问题或贡献代码。
-              我们欢迎社区贡献和反馈，共同改进这个工具。
+              We take your privacy very seriously. That's why Photo Privacy Analyzer is a completely client-side application:
+            </p>
+            <ul>
+              <li>Your photos never leave your device</li>
+              <li>All analysis is performed in your browser</li>
+              <li>No trackers or analytics tools are used</li>
+              <li>No user data is stored</li>
+            </ul>
+            
+            <h2>Open Source Project</h2>
+            <p>
+              Photo Privacy Analyzer is an open-source project. You can view the source code, report issues, or contribute on GitHub.
+              We welcome community contributions and feedback to improve this tool together.
             </p>
             
             <div className="mt-8 text-center">
               <Link href="/" className="btn-primary">
-                返回首页
+                Back to Home
               </Link>
             </div>
           </div>

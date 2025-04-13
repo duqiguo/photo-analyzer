@@ -15,28 +15,28 @@ export default function Home() {
   const [showAnalysisResult, setShowAnalysisResult] = useState(false);
   const [exifData, setExifData] = useState<ExifData>({});
 
-  // 处理图片选择
+  // Handle image selection
   const handleImageSelect = async (file: File) => {
     setSelectedImage(file);
     
-    // 创建图片URL以供显示
+    // Create image URL for display
     const objectUrl = URL.createObjectURL(file);
     setImageUrl(objectUrl);
     
-    // 解析EXIF数据
+    // Parse EXIF data
     try {
       const extractedExifData = await parseExifData(file);
-      console.log('解析到的EXIF数据:', extractedExifData);
+      console.log('Parsed EXIF data:', extractedExifData);
       setExifData(extractedExifData);
     } catch (error) {
-      console.error('解析EXIF数据失败:', error);
+      console.error('Failed to parse EXIF data:', error);
       setExifData({});
     }
     
-    // 立即显示分析弹窗
+    // Show analysis modal immediately
     setShowAnalysisResult(true);
     
-    // 清理函数
+    // Cleanup function
     return () => URL.revokeObjectURL(objectUrl);
   };
 
@@ -55,10 +55,10 @@ export default function Home() {
         <div className="max-w-6xl w-full">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              照片分析器
+              Photo Analyzer
             </h1>
             <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-              上传一张照片，了解它可能包含的隐私信息以及人工智能可以从中提取的数据。
+              Upload a photo to understand what privacy information it might contain and what data AI can extract from it.
             </p>
           </div>
           
@@ -71,7 +71,7 @@ export default function Home() {
 
       <Footer />
       
-      {/* 分析结果模态框 */}
+      {/* Analysis Result Modal */}
       {showAnalysisResult && imageUrl && selectedImage && (
         <Modal
           isOpen={showAnalysisResult}

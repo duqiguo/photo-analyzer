@@ -13,45 +13,45 @@ interface GoogleVisionAnalyzerProps {
 }
 
 export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: GoogleVisionAnalyzerProps) {
-  const [isAnalyzing, setIsAnalyzing] = useState(true); // 初始状态设为分析中
+  const [isAnalyzing, setIsAnalyzing] = useState(true); // Initial state set to analyzing
   const [results, setResults] = useState<VisionAPIResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'description' | 'data'>('description');
   const [mapLocation, setMapLocation] = useState<{lat: number, lng: number} | null>(null);
 
-  // 当imageFile变化时自动调用分析
+  // Automatically analyze when imageFile changes
   useEffect(() => {
     if (imageFile) {
       handleAnalyze();
     }
   }, [imageFile]);
   
-  // 设置地图位置
+  // Set map location
   useEffect(() => {
-    console.log('设置地图位置 - GPS数据:', gpsData);
-    console.log('设置地图位置 - 分析结果:', results?.landmarkAnnotations);
+    console.log('Setting map location - GPS data:', gpsData);
+    console.log('Setting map location - Analysis results:', results?.landmarkAnnotations);
     
-    // 优先使用传入的GPS数据（EXIF中提取的）
+    // Priority use GPS data from EXIF
     if (gpsData && typeof gpsData.latitude === 'number' && typeof gpsData.longitude === 'number') {
-      console.log('使用EXIF GPS数据:', gpsData.latitude, gpsData.longitude);
+      console.log('Using EXIF GPS data:', gpsData.latitude, gpsData.longitude);
       setMapLocation({
         lat: gpsData.latitude,
         lng: gpsData.longitude
       });
     } 
-    // 其次尝试从分析结果中获取位置
+    // Then try to get location from analysis results
     else if (results?.landmarkAnnotations && results.landmarkAnnotations.length > 0 && 
              results.landmarkAnnotations[0].locations && results.landmarkAnnotations[0].locations.length > 0) {
       const { latitude, longitude } = results.landmarkAnnotations[0].locations[0].latLng;
-      console.log('使用地标分析位置:', latitude, longitude);
+      console.log('Using landmark analysis location:', latitude, longitude);
       setMapLocation({
         lat: latitude,
         lng: longitude
       });
     }
-    // 如果没有位置信息，默认显示北京
+    // If no location info, default to Beijing
     else {
-      console.log('使用默认位置');
+      console.log('Using default location');
       setMapLocation({
         lat: 39.9042,
         lng: 116.4074
@@ -61,7 +61,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
 
   const handleAnalyze = async () => {
     if (!imageFile) {
-      setError('请先上传图片');
+      setError('Please upload an image first');
       return;
     }
 
@@ -69,42 +69,43 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
       setIsAnalyzing(true);
       setError(null);
       
-      // 立即调用Google Vision API分析图片
+      // Immediately call Google Vision API to analyze the image
       const analysisResults = await analyzeImage(imageFile);
-      console.log('Google Vision API分析结果:', analysisResults);
+      console.log('Google Vision API analysis results:', analysisResults);
       setResults(analysisResults);
       
     } catch (err) {
-      setError('分析图片时出错');
-      console.error('分析图片时出错:', err);
+      setError('Error analyzing image');
+      console.error('Error analyzing image:', err);
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  // 基于分析结果生成描述
+  // Generate description based on analysis results
   const generateDescription = () => {
     if (!results) return '';
     
     let description = '';
     let location = '';
     
-    // 从分析结果中提取位置信息
+    // Extract location information from analysis results
     if (results.landmarkAnnotations && results.landmarkAnnotations.length > 0) {
       location = results.landmarkAnnotations[0].description;
     }
     
-    // 分析人物
+    // Analyze people
     const people = results.extendedAnalysis?.people;
     if (people) {
       const count = people.count || 1;
       const gender = people.gender || [];
       const race = people.race || [];
       
-      // 第一段：描述场景、人物和位置
-      description += `In the scene of the photo, there is ${count === 1 ? 'one person' : count} person${count === 1 ? '' : 's'}.`;
+      // Section 1: Describe scene, people and location
+      description += `In the scene of the photo, there is ${count === 1 ? 'one person' : `${count} individuals`}`;
+      description += `${count === 1 ? 's' : ''} `;
       
-      // 添加环境描述
+      // Add environment description
       if (results.labelAnnotations && results.labelAnnotations.length > 0) {
         const environmentLabels = results.labelAnnotations
           .filter(label => ['tree', 'plant', 'water', 'sky', 'mountain', 'grass', 'foliage', 'nature', 
@@ -131,17 +132,17 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
         description += '.';
       }
       
-      // 第二段：描述人物种族和服装
+      // Section 2: Describe race and clothing
       if (race.length > 0) {
         description += ` They are likely from the ${race.join(' or ')} race.`;
       }
       
-      // 添加服装描述
+      // Add clothing description
       if (people.clothing && people.clothing.length > 0) {
         description += ` They are wearing ${people.clothing.join(', ')}.`;
       }
       
-      // 添加表情或情绪
+      // Add expression or emotion
       if (people.emotions && Object.values(people.emotions).length > 0) {
         const emotions = Object.values(people.emotions)[0].split('、')[0];
         description += ` Their expression shows ${emotions === 'Joy' ? 'joy' : 
@@ -151,7 +152,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
                             emotions === 'Neutral' ? 'neutral' : emotions}.`;
       }
 
-      // 第三段：收入范围和政治倾向
+      // Section 3: Income range and political leaning
       if (results.extendedAnalysis?.possibleIncomeRange) {
         const incomeRange = results.extendedAnalysis.possibleIncomeRange;
         description += ` According to visual indicators, they belong to the <span class="font-semibold">${
@@ -161,7 +162,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
         }</span> group.`;
       }
       
-      // 添加政治倾向
+      // Add political leaning
       if (results.extendedAnalysis?.possiblePoliticalAffiliation) {
         const political = results.extendedAnalysis.possiblePoliticalAffiliation;
         description += ` They are likely to lean towards <span class="font-semibold">${
@@ -171,7 +172,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
         }</span>.`;
       }
 
-      // 第四段：兴趣爱好和广告目标
+      // Section 4: Interests and advertising targets
       if (results.extendedAnalysis?.possibleInterests && results.extendedAnalysis.possibleInterests.length > 0) {
         const interestsMap: Record<string, string> = {
           'Sports': 'sports', 
@@ -197,7 +198,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
         description += ` Based on visual clues, they may react to ads related to ${results.extendedAnalysis.possibleTargetedAds.slice(0, 3).join(', ')}.`;
       }
     } else {
-      // 如果没有检测到人，则描述环境
+      // If no people detected, describe the environment
       description = 'This photo shows a scene';
       if (location) {
         description += `, located near <span class="font-semibold">${location}</span>.`;
@@ -205,13 +206,13 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
         description += '.';
       }
       
-      // 添加物体描述
+      // Add object description
       if (results.labelAnnotations && results.labelAnnotations.length > 0) {
         const topLabels = results.labelAnnotations.slice(0, 5).map(label => label.description);
         description += ` The main content includes ${topLabels.join(', ')}.`;
       }
       
-      // 添加颜色信息
+      // Add color information
       if (results.imagePropertiesAnnotation?.dominantColors?.colors) {
         const colors = results.imagePropertiesAnnotation.dominantColors.colors;
         if (colors.length > 0) {
@@ -236,7 +237,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
         }
       }
       
-      // 如果有web检测结果，添加相关性最高的网页内容
+      // If web detection results exist, add most relevant web content
       if (results.webDetection?.bestGuessLabels && results.webDetection.bestGuessLabels.length > 0) {
         description += ` The most similar network search result for the image content is "${results.webDetection.bestGuessLabels[0].label}".`;
       }
@@ -249,19 +250,19 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
     return null;
   }
 
-  // 创建谷歌地图URL
+  // Create Google Maps URL with English language setting
   const getGoogleMapUrl = () => {
     if (!mapLocation) return '';
-    // 使用无需API密钥的Google Maps URL格式
-    return `https://maps.google.com/maps?q=${mapLocation.lat},${mapLocation.lng}&z=15&output=embed`;
+    // Use Google Maps URL format with language parameter set to English
+    return `https://maps.google.com/maps?q=${mapLocation.lat},${mapLocation.lng}&z=15&output=embed&hl=en&gl=us`;
   };
 
   return (
     <div className="w-full overflow-hidden bg-black text-white">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-        {/* 左侧：图片和地图 */}
+        {/* Left side: Image and Map */}
         <div className="flex flex-col">
-          {/* 上部分：图片 */}
+          {/* Top part: Image */}
           <div className="flex items-center justify-center bg-black" style={{height: '50vh'}}>
             <img 
               src={imageUrl} 
@@ -270,7 +271,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
             />
           </div>
           
-          {/* 下部分：谷歌地图 */}
+          {/* Bottom part: Google Map */}
           <div className="relative" style={{height: '30vh'}}>
             {mapLocation ? (
               <iframe
@@ -288,9 +289,9 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
           </div>
         </div>
         
-        {/* 右侧：分析结果 */}
+        {/* Right side: Analysis Results */}
         <div className="flex flex-col h-full">
-          {/* 标签切换 */}
+          {/* Tab switching */}
           <div className="flex bg-gray-800">
             <button
               className={`py-3 px-6 text-lg w-1/2 text-center transition-colors ${
@@ -314,22 +315,22 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
             </button>
           </div>
           
-          {/* 分析加载状态 */}
+          {/* Analysis loading state */}
           {isAnalyzing && (
             <div className="flex justify-center items-center p-10 flex-grow">
               <div className="flex flex-col items-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-4"></div>
-                <p className="text-gray-300">正在分析您的照片...</p>
+                <p className="text-gray-300">Analyzing your photo...</p>
               </div>
             </div>
           )}
           
-          {/* 内容区域 */}
+          {/* Content area */}
           {!isAnalyzing && (
             <div className="p-6 overflow-y-auto flex-grow">
               {activeTab === 'description' && results && (
                 <div className="space-y-4">
-                  {/* 主要描述内容 - 使用API分析结果 */}
+                  {/* Main description content - Using API analysis results */}
                   <div className="text-xl leading-relaxed" 
                     dangerouslySetInnerHTML={{ __html: generateDescription() }}></div>
                 </div>
@@ -337,7 +338,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
               
               {activeTab === 'data' && results && (
                 <div className="space-y-3">
-                  {/* 1. 人物信息 */}
+                  {/* 1. People information */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">People</h3>
                     <p>{(results.extendedAnalysis?.people?.count || 1)} {(results.extendedAnalysis?.people?.count || 1) === 1 ? 'person' : 'people'}, 
@@ -346,37 +347,37 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
                     </p>
                   </div>
                   
-                  {/* 2. 种族信息 */}
+                  {/* 2. Race information */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">Race</h3>
                     <p>{results.extendedAnalysis?.people?.race?.length ? results.extendedAnalysis.people.race.join(', ') : 'Unknown'}</p>
                   </div>
                   
-                  {/* 4. 情绪 */}
+                  {/* 4. Emotion */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">Emotion</h3>
                     <p>{results.extendedAnalysis?.people?.emotions && Object.keys(results.extendedAnalysis.people.emotions).length > 0 ? 
                       Object.entries(results.extendedAnalysis.people.emotions).map(([person, emotion]) => {
-                        const personCN = person.replace('Person', '人物');
-                        const emotionCN = emotion
-                          .replace('Joy', '喜悦')
-                          .replace('Sorrow', '悲伤')
-                          .replace('Anger', '愤怒')
-                          .replace('Surprise', '惊讶')
-                          .replace('Neutral', '平静')
-                          .replace(', ', '、');
-                        return `${personCN}: ${emotionCN}`;
-                      }).join('、') : '人物1: 平静'}</p>
+                        const personEN = person.replace('Person', 'Person ');
+                        const emotionEN = emotion
+                          .replace('Joy', 'Joy')
+                          .replace('Sorrow', 'Sorrow')
+                          .replace('Anger', 'Anger')
+                          .replace('Surprise', 'Surprise')
+                          .replace('Neutral', 'Neutral')
+                          .replace(', ', ', ');
+                        return `${personEN}: ${emotionEN}`;
+                      }).join(', ') : 'Person 1: Neutral'}</p>
                   </div>
                   
-                  {/* 5. 服装 */}
+                  {/* 5. Clothing */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">Clothing</h3>
                     <p>{results.extendedAnalysis?.people?.clothing && results.extendedAnalysis.people.clothing.length > 0 ? 
                       results.extendedAnalysis.people.clothing.join(', ') : 'Casual clothing'}</p>
                   </div>
                   
-                  {/* 6. 兴趣爱好 */}
+                  {/* 6. Interests */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">Interests</h3>
                     <p>{results.extendedAnalysis?.possibleInterests && results.extendedAnalysis.possibleInterests.length > 0 ? 
@@ -394,7 +395,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
                         interest === 'General interests' ? 'general interests' : interest).join(', ') : 'general interests'}</p>
                   </div>
                   
-                  {/* 7. 政治倾向 */}
+                  {/* 7. Political Affiliation */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">Political Affiliation</h3>
                     <p>{results.extendedAnalysis?.possiblePoliticalAffiliation ? 
@@ -404,7 +405,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
                       results.extendedAnalysis.possiblePoliticalAffiliation) : 'neutral/unknown'}</p>
                   </div>
                   
-                  {/* 3. 收入范围 */}
+                  {/* 3. Income Range */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">Income Range</h3>
                     <p>{results.extendedAnalysis?.possibleIncomeRange ? 
@@ -414,7 +415,7 @@ export default function GoogleVisionAnalyzer({ imageFile, imageUrl, gpsData }: G
                       results.extendedAnalysis.possibleIncomeRange) : 'middle income'}</p>
                   </div>
                   
-                  {/* 8. 可能的广告目标 */}
+                  {/* 8. Possible Target Ads */}
                   <div className="bg-gray-800/50 p-3 rounded-lg">
                     <h3 className="font-semibold mb-1">Target Ads</h3>
                     <p>{results.extendedAnalysis?.possibleTargetedAds && results.extendedAnalysis.possibleTargetedAds.length > 0 ? 
