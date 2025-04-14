@@ -107,7 +107,7 @@ export default function ImageUpload({
           </p>
           
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
-            {t('analysisSecurity')}
+            {t('secureAnalysis')}
           </p>
         </div>
       </div>
